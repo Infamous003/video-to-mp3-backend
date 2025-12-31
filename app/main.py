@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.core.logging import setup_logging, get_logger
 from app.database.db import wait_for_db
+from app.api.routers import auth
 
 setup_logging()
 logger = get_logger(__name__)
@@ -16,6 +17,10 @@ async def lifespan(app: FastAPI):
     logger.info("Application shutdown")
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
+
+app.include_router(
+    auth.router
+)
 
 @app.get("/")
 def root():
