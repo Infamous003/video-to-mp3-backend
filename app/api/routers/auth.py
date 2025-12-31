@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session
+from sqlmodel import Session, select
 from app.api.deps import get_db
 from app.schemas.auth import Token, LoginUser, RegisterUser, UserRead
 from app.services.auth import AuthService
@@ -8,6 +8,11 @@ from app.domain.exceptions import (
     UserNotFoundException,
     InvalidCredentialsException,
 )
+from app.api.deps import get_current_user
+from jwt import PyJWTError
+from app.core.security import decode_access_token
+from app.database.models.user import User
+from fastapi.security import OAuth2PasswordRequestForm
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -27,12 +32,12 @@ def register(
 
 @router.post("/login", response_model=Token)
 def login(
-    payload: LoginUser,
+    form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db),
 ):
     auth_service = AuthService(db)
     try:
-        access_token = auth_service.login(payload.username, payload.password)
+        access_token = auth_service.login(form_data.username, form_data.password)
         return {"access_token": access_token, "token_type": "bearer"}
     except (UserNotFoundException, InvalidCredentialsException):
         raise HTTPException(
@@ -40,3 +45,7 @@ def login(
             detail="Invalid username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+@router.get("/me", response_model=UserRead)
+def read_current_user(current_user: User = Depends(get_current_user)):
+    return current_user
