@@ -3,6 +3,7 @@ from minio.error import S3Error
 from app.core.config import settings
 from app.domain.exceptions import StorageError
 from typing import BinaryIO
+import os
 
 class StorageService:
     def __init__(self):
@@ -35,12 +36,16 @@ class StorageService:
         Uploads a file to an object storage like MinIO or S3.
         """
 
+        file.seek(0, os.SEEK_END)
+        size = file.tell()
+        file.seek(0)
+
         try:
             self.client.put_object(
                 bucket_name=self.bucket,
                 object_name=object_name,
                 data=file,
-                length=-1,  # -1 means unknown size, minio will handle it
+                length=size,
                 content_type=content_type
             )
         except S3Error as e:

@@ -5,6 +5,7 @@ from app.core.logging import setup_logging, get_logger
 from app.database.db import wait_for_db
 from app.api.routers import auth
 from app.services.storage import StorageService
+from app.api.routers import uploads
 
 setup_logging()
 logger = get_logger(__name__)
@@ -24,9 +25,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
-app.include_router(
-    auth.router
-)
+app.include_router(auth.router)
+app.include_router(uploads.router)
 
 @app.get("/")
 def root():

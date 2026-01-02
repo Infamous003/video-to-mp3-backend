@@ -10,6 +10,7 @@ class JobStatus(str, Enum):
     FAILED = "FAILED"
 
 class ConversionJob(SQLModel, table=True):
+    __tablename__="conversion_jobs"
     id: UUID = Field(default_factory=uuid4, primary_key=True)
     user_id: int = Field(index=True)
 
