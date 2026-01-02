@@ -6,3 +6,6 @@ class UserNotFoundException(Exception):
 
 class InvalidCredentialsException(Exception):
     pass
+
+class StorageError(Exception):
+    pass

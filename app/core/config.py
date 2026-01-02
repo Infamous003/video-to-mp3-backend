@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
 
+    # MinIO / S3 configurations
+    STORAGE_ENDPOINT: str = "localhost:9000"
+    STORAGE_ACCESS_KEY: str = "minioadmin"
+    STORAGE_SECRET_KEY: str = "minioadmin"
+    STORAGE_SECURE: bool = False # This controls whether to use HTTPS or HTTP
+    STORAGE_BUCKET_NAME: str = "media"
+
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
