@@ -6,6 +6,7 @@ from sqlmodel import SQLModel
 import os
 from dotenv import load_dotenv
 from app.database.models.user import User 
+from app.database.models.conversion_jobs import ConversionJob
 
 load_dotenv()
 
