@@ -44,15 +44,15 @@ class UploadService:
                 file=file,
                 content_type=content_type,
             )
-
-            self.queue.publish({
-                "job_id": str(job.id),
-            })
         except Exception as e:
             job.status = JobStatus.FAILED
             job.error = str(e)
             self.db.commit()
             raise
+
+        from app.workers.conversion import convert_video
+        convert_video.delay(str(job.id))
+        
 
         return job
         

@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     STORAGE_SECURE: bool = False # This controls whether to use HTTPS or HTTP
     STORAGE_BUCKET_NAME: str = "media"
 
+    # RabbitMQ
+    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672//"
+
 
     model_config = SettingsConfigDict(
         env_file=".env",
