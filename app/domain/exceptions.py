@@ -9,3 +9,6 @@ class InvalidCredentialsException(Exception):
 
 class StorageError(Exception):
     pass
+
+class ConversionJobNotFoundException(Exception):
+    pass

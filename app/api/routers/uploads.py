@@ -6,6 +6,8 @@ from app.services.queue.fake import FakeQueue
 from app.services.storage import StorageService
 from app.database.models.user import User
 from app.schemas.conversion_jobs import ConversionJobRead
+from uuid import UUID
+from app.domain.exceptions import ConversionJobNotFoundException
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
@@ -38,3 +40,23 @@ def upload_video(
     )
 
     return job
+
+@router.get("/{id}")
+def get_upload_status(
+    id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> ConversionJobRead:
+    service = UploadService(db=db, storage=storage, queue=queue)
+
+    try:
+        job = service.get_status(
+            job_id=id,
+            user_id=current_user.id,
+        )
+        return job
+    except ConversionJobNotFoundException:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Job not found"
+        )

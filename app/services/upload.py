@@ -1,8 +1,10 @@
 from app.services.storage import StorageService
 from app.database.models.conversion_jobs import ConversionJob, JobStatus
-from sqlmodel import Session
+from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError 
 from typing import BinaryIO
+from uuid import UUID
+from app.domain.exceptions import ConversionJobNotFoundException
 
 class UploadService:
     def __init__(self, queue, storage: StorageService, db: Session):
@@ -54,3 +56,22 @@ class UploadService:
 
         return job
         
+    def get_status(
+        self,
+        job_id: UUID,
+        user_id: int,
+    ) -> ConversionJob:
+        """
+        Fetch a conversion job status owned by the given user
+        """
+
+        query = select(ConversionJob).where(
+            ConversionJob.id == job_id,
+            ConversionJob.user_id == user_id,
+        )
+        job = self.db.exec(query).first()
+
+        if job is None:
+            raise ConversionJobNotFoundException
+
+        return job
