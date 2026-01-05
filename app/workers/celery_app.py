@@ -15,5 +15,6 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,  # <-- fixed typo
 )
 
-# 🔴 THIS IS REQUIRED
-import app.workers.conversion
+# Celery needs to know where task functions are defind
+# It automatically looks for files named 'tasks.py'
+celery_app.autodiscover_tasks(["app.workers"])

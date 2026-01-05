@@ -5,6 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from typing import BinaryIO
 from uuid import UUID
 from app.domain.exceptions import ConversionJobNotFoundException
+from app.workers.tasks import convert_video
 
 class UploadService:
     def __init__(self, queue, storage: StorageService, db: Session):
@@ -50,9 +51,7 @@ class UploadService:
             self.db.commit()
             raise
 
-        from app.workers.conversion import convert_video
         convert_video.delay(str(job.id))
-        
 
         return job
         
