@@ -7,6 +7,7 @@ class ConversionJobRead(BaseModel):
     id: UUID
     status: JobStatus
     created_at: datetime
+    error: str | None
 
     class Config:
         from_attributes = True

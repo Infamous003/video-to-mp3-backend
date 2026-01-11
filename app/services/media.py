@@ -4,14 +4,18 @@ from sqlmodel import Session, select
 from sqlalchemy.exc import SQLAlchemyError 
 from typing import BinaryIO
 from uuid import UUID
-from app.domain.exceptions import ConversionJobNotFoundException
+from app.domain.exceptions import (
+    ConversionJobNotFoundException, 
+    StorageError, 
+    JobNotCompletedException
+)
+from app.domain.errors import ConversionError
 from app.workers.tasks import convert_video
 
-class UploadService:
-    def __init__(self, queue, storage: StorageService, db: Session):
+class MediaService:
+    def __init__(self, storage: StorageService, db: Session):
         self.storage = storage
         self.db = db
-        self.queue = queue
     
     def upload_video(
         self,
@@ -45,9 +49,9 @@ class UploadService:
                 file=file,
                 content_type=content_type,
             )
-        except Exception as e:
+        except StorageError as e:
             job.status = JobStatus.FAILED
-            job.error = str(e)
+            job.error = ConversionError.STORAGE_UPLOAD_FAILED.value
             self.db.commit()
             raise
 
@@ -74,3 +78,11 @@ class UploadService:
             raise ConversionJobNotFoundException
 
         return job
+    
+    def download_mp3(self, job_id: UUID, user_id: int):
+        job = self.get_status(job_id, user_id)
+
+        if job.status != JobStatus.DONE:
+            raise JobNotCompletedException
+
+        return self.storage.download_file(job.output_key)

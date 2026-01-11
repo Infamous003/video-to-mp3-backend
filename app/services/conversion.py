@@ -4,7 +4,8 @@ import os
 from sqlmodel import Session, select
 from app.database.models.conversion_jobs import ConversionJob, JobStatus
 from app.services.storage import StorageService
-from app.domain.exceptions import ConversionJobNotFoundException
+from app.domain.errors import ConversionError
+from app.domain.exceptions import ConversionFailedException
 
 class ConversionService:
     def __init__(self, db: Session, storage: StorageService | None = None):
@@ -23,11 +24,12 @@ class ConversionService:
             self._convert(job)
             job.status = JobStatus.DONE
             self.db.commit()
-        except Exception as e:
+        except ConversionFailedException as e:
             job.status = JobStatus.FAILED
-            job.error = str(e)
+            job.error = ConversionError.FFMPEG_FAILED
             self.db.commit()
             raise
+
 
     def _convert(self, job: ConversionJob) -> None:
         # ffmpeg only works with directories
@@ -38,9 +40,14 @@ class ConversionService:
             input_path = os.path.join(tmp, "input")
             output_path = os.path.join(tmp, "output.mp3")
 
-            video_bytes = self.storage.download_file(job.input_key)
-            with open(input_path, "wb") as f:
-                f.write(video_bytes)
+            obj = self.storage.download_file(job.input_key)
+            try:
+                with open(input_path, "wb") as f:
+                    for chunk in obj.stream(32 * 1024):
+                        f.write(chunk)
+            finally:
+                obj.close()
+                obj.release_conn()
 
             self._run_ffmpeg(input_path, output_path)
 
@@ -53,6 +60,7 @@ class ConversionService:
                 )
 
             job.output_key = output_key
+
 
     def _run_ffmpeg(self, input_path: str, output_path: str) -> None:
         cmd = [
@@ -72,4 +80,5 @@ class ConversionService:
         )
 
         if result.returncode != 0:
-            raise RuntimeError(f"ffmpeg failed: {result.stderr}")
+            raise ConversionFailedException
+        
