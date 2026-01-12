@@ -22,7 +22,15 @@ class StorageService:
         )
 
         self.bucket = settings.STORAGE_BUCKET_NAME
-        self._ensure_bucket_exists()
+        try:
+            if not self.client.bucket_exists(self.bucket):
+                self.client.make_bucket(self.bucket)
+        except (MaxRetryError, NewConnectionError) as e:
+            raise StorageUnavailableError("Storage unavailable")
+        except S3Error as e:
+            if e.code in ("AccessDenied", "InvalidAccessKeyId"):
+                raise StoragePermissionError("Storage access denied")
+            raise StorageError("Storage error")
     
     def _ensure_bucket_exists(self):
         """
@@ -31,7 +39,14 @@ class StorageService:
         try:
             if not self.client.bucket_exists(self.bucket):
                 self.client.make_bucket(self.bucket)
+        
+        except (MaxRetryError, NewConnectionError) as e:
+            raise StorageUnavailableError("Object storage unavailable") from e
+        
         except S3Error as e:
+            if e.code in ("AccessDenied", "InvalidAccessKeyId"):
+                raise StoragePermissionError("Invalid storage credentials") from e
+
             raise StorageError(f"Failed to initialize storage: {e}") from e
 
 

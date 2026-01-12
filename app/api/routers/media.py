@@ -18,8 +18,6 @@ from app.domain.exceptions import (
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
-storage = StorageService()
-
 @router.post("/")
 def upload_video(
     file: UploadFile,
@@ -53,6 +51,7 @@ def get_upload_status(
     id: UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    storage: StorageService = Depends(get_storage_service),
 ) -> ConversionJobRead:
     service = MediaService(db=db, storage=storage)
 
@@ -72,6 +71,7 @@ def get_upload_status(
 def download_mp3(
     id: UUID,
     db: Session = Depends(get_db),
+    storage: StorageService = Depends(get_storage_service),
     current_user: User = Depends(get_current_user),
 ):
     service = MediaService(db=db, storage=storage)
