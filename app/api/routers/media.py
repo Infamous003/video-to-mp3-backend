@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, HTTPException, status
+from fastapi import APIRouter, Depends, UploadFile, HTTPException, status
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session
 from app.api.deps import get_db, get_current_user, get_storage_service
@@ -18,7 +18,7 @@ from app.domain.exceptions import (
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
 
-@router.post("/")
+@router.post("/", response_model=ConversionJobRead)
 def upload_video(
     file: UploadFile,
     db: Session = Depends(get_db),
@@ -28,22 +28,21 @@ def upload_video(
     service = MediaService(db=db, storage=storage)
 
     try:
-        job = service.upload_video(
+        return service.upload_video(
             user_id=current_user.id,
             file=file.file,
             filename=file.filename,
             content_type=file.content_type,
         )
-        return job
 
     except StoragePermissionError:
-        raise HTTPException(403, "Storage access denied")
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Storage access denied")
 
     except StorageUnavailableError:
-        raise HTTPException(503, "Storage unavailable")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Storage temporarily unavailable")
 
     except StorageError:
-        raise HTTPException(500, "Failed to upload video")
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to upload video")
 
 
 @router.get("/{id}")

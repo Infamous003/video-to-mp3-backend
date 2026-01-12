@@ -56,18 +56,18 @@ class StorageService:
         file: BinaryIO,
         content_type: str,
     ) -> None:
-        file.seek(0, os.SEEK_END)
-        size = file.tell()
-        file.seek(0)
-
         try:
             self.client.put_object(
                 bucket_name=self.bucket,
                 object_name=object_name,
                 data=file,
-                length=size,
+                length=-1,
+                part_size=10*1024*1024, # 10MB
                 content_type=content_type,
             )
+
+        except (MaxRetryError, NewConnectionError) as e:
+            raise StorageUnavailableError("Object storage unavailable") from e
 
         except S3Error as e:
             if e.code in ("AccessDenied", "InvalidAccessKeyId"):
@@ -84,9 +84,6 @@ class StorageService:
                 f"Failed to upload file {object_name}"
             ) from e
         
-        except (MaxRetryError, NewConnectionError) as e:
-            raise StorageUnavailableError("Object storage unavailable") from e
-
 
     def download_file(self, object_name: str) -> IO[bytes]:
         try:
@@ -94,6 +91,9 @@ class StorageService:
                 bucket_name=self.bucket,
                 object_name=object_name,
             )
+
+        except (MaxRetryError, NewConnectionError) as e:
+            raise StorageUnavailableError("Object storage unavailable") from e
 
         except S3Error as e:
             if e.code == "NoSuchKey":
@@ -114,7 +114,3 @@ class StorageService:
             raise StorageError(
                 f"Storage error while downloading {object_name}"
             ) from e
-        
-        except (MaxRetryError, NewConnectionError) as e:
-            raise StorageUnavailableError("Object storage unavailable") from e
-
