@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     STORAGE_BUCKET_NAME: str = "media"
 
     # RabbitMQ
-    RABBITMQ_URL: str = "amqp://guest:guest@localhost:5672//"
+    RABBITMQ_URL: str
 
 
     model_config = SettingsConfigDict(

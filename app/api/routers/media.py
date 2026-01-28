@@ -17,9 +17,9 @@ from app.domain.exceptions import (
     ConversionFailedException,
 )
 
-router = APIRouter(prefix="/uploads", tags=["uploads"])
+router = APIRouter(prefix="/media", tags=["uploads"])
 
-@router.post("/", response_model=ConversionJobRead)
+@router.post("/upload", response_model=ConversionJobRead)
 def upload_video(
     file: UploadFile,
     db: Session = Depends(get_db),
@@ -49,7 +49,7 @@ def upload_video(
         raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Failed to upload video")
 
 
-@router.get("/{id}")
+@router.get("/{id}/status")
 def get_upload_status(
     id: UUID,
     db: Session = Depends(get_db),

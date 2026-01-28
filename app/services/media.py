@@ -32,6 +32,7 @@ class MediaService:
         ALLOWED_VIDEO_TYPES = {
             "video/mp4",
             "video/webm",
+            "video/x-matroska",
             # more types can be added here later
         }
 
