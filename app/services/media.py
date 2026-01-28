@@ -7,7 +7,8 @@ from uuid import UUID
 from app.domain.exceptions import (
     ConversionJobNotFoundException, 
     StorageError, 
-    JobNotCompletedException
+    JobNotCompletedException,
+    ConversionFailedException
 )
 from app.domain.errors import ConversionError
 from app.workers.tasks import convert_video
@@ -27,6 +28,15 @@ class MediaService:
         """
         Uploads a video to object storage and creates a conversion job row
         """
+
+        ALLOWED_VIDEO_TYPES = {
+            "video/mp4",
+            "video/webm",
+            # more types can be added here later
+        }
+
+        if content_type not in ALLOWED_VIDEO_TYPES:
+            raise ConversionFailedException("Unsupported video format")
 
         input_key = f"videos/{user_id}/{filename}"
         job = ConversionJob(

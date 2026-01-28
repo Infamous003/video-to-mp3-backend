@@ -13,7 +13,8 @@ from app.domain.exceptions import (
     ObjectNotFoundError,
     StoragePermissionError,
     StorageUnavailableError,
-    StorageError
+    StorageError,
+    ConversionFailedException,
 )
 
 router = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -34,6 +35,9 @@ def upload_video(
             filename=file.filename,
             content_type=file.content_type,
         )
+    
+    except ConversionFailedException as e:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, str(e))
 
     except StoragePermissionError:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Storage access denied")
